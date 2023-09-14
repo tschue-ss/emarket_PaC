@@ -21,8 +21,8 @@ global:
     ## @param global.app.url route53 url's for default and tenant app 
     ##
     url:
-      default: msa-emarket.mspt2-miracom2.click
-      domain: .mspt2-miracom2.click
+      default: msa-emarket.tschuess.click
+      domain: .tschuess.click
   ## @param global.env.kubernetes.enabled to enable the deployment cluster env
   ##
   image:
@@ -105,7 +105,7 @@ global:
   sql:
     ## @param global.sql.host AWS RDS service endpoint
     ##
-    host: kwangcheol-keycloackdb.cf20pihkxny7.us-east-1.rds.amazonaws.com
+    host: tschuess-keycloackdb.cochvordkf8m.us-east-1.rds.amazonaws.com
     ## @param global.sql.port AWS RDS service port
     ##
     port: 3306
@@ -113,7 +113,7 @@ global:
       ## @param global.sql.common.user AWS RDS service username
       ##
       user: admin
-      pwd: 2IPgPiqe4D
+      pwd: 3ah0NCq4I3
       pid: Developer
   mongo:
     architecture: standalone
@@ -126,7 +126,7 @@ global:
     ##
     standalone:
       port: 6379
-      svc: kwangcheol-redis-cluster.n1yf2u.0001.use1.cache.amazonaws.com
+      svc: tschuess-redis-cluster.9ae45j.0001.use1.cache.amazonaws.com
   eventbus:
       svc:  rabbitmq
       constr:  rabbitmq
