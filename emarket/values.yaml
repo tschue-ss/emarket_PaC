@@ -1,0 +1,180 @@
+global:
+  app:
+    name: emarket
+    namespace: default
+  tls:
+    enabled: false          # True to enable TLS (set by deploy-all.ps1)
+    issuer: ""
+  ingress:                                              # ingress related settings
+    entries:
+      basket: basket-api                                # ingress entry for basket api
+      catalog: catalog-api                              # ingress entry for catalog api
+      image: image-api                                  # ingress entry for image api
+      ordering: ordering-api                            # ingress entry for ordering api
+      identity: identity                                # ingress entry for identity api
+      mvc: webmvc                                       # ingress entry for web mvc
+      spa: ""                                           # ingress entry for web spa
+      webstatus: webstatus                              # ingress entry for web status
+      webshoppingapigw: webshoppingapigw                # ingress entry for web shopping Agw
+      webmarketingapigw: webmarketingapigw              # ingress entry for web mkg Agw
+      mobilemarketingapigw: mobilemarketingapigw        # ingress entry for mobile mkg Agw
+      mobileshoppingapigw: mobileshoppingapigw          # ingress entry for mobile shopping Agw
+      webshoppingagg: webshoppingagg                    # ingress entry for web shopping aggregator
+      mobileshoppingagg: mobileshoppingagg              # ingress entry for mobile shopping aggregator
+      payment: payment-api                              # ingress entry for payment api
+      locations: locations-api                          # ingress entry for locations api
+      marketing: marketing-api                          # ingress entry for marketing api
+      webhooks: webhooks-api                            # ingress entry for webhooks api
+      webhooksweb: webhooks-web                         # ingress entry for webhooks web demo client
+      webhooksnode: webhooks-node                         # ingress entry for webhooks web demo client
+  svc:
+    basket: basket-api                                # service name for basket api
+    catalog: catalog-api                              # service name for catalog api
+    image: image-api                                  # service name for image api
+    ordering: ordering-api                            # service name for ordering api
+    orderingbackgroundtasks: ordering-backgroundtasks # service name for orderingbackgroundtasks
+    notification: notification                        # service name for notification
+    identity: identity-api                            # service name for identity api
+    mvc: webmvc                                       # service name for web mvc
+    spa: webspa                                       # service name for web spa
+    webstatus: webstatus                              # service name for web status
+    webshoppingapigw: gateway-proxy                   # service name for web shopping Agw
+    webmarketingapigw: gateway-proxy                  # service name for web mkg Agw
+    mobilemarketingapigw: gateway-proxy               # service name for mobile mkg Agw
+    mobileshoppingapigw: gateway-proxy                # service name for mobile shopping Agw
+    webshoppingagg: webshoppingagg                    # service name for web shopping aggregator
+    mobileshoppingagg: mobileshoppingagg              # service name for mobile shopping aggregator
+    payment: payment-api                              # service name for payment api
+    locations: locations-api                          # service name for locations api
+    marketing: marketing-api                          # service name for marketing ap
+    webhooks: webhooks-api                            # service name for webhooks api
+    webhooksweb: webhooks-client                      # service name for webhooks web
+    webhooksnode: webhooks-node
+  sql:
+    catalog:                # inf.sql.catalog: settings for the catalog-api sql (user, pwd, db)
+      db: CatalogDb         # Catalog API SQL db name
+    ordering:               # inf.sql.ordering: settings for the ordering-api sql (user, pwd, db)
+      db: OrderingDb        # Ordering API SQL db name
+    identity:
+      db: IdentityDb        # Ordering API SQL db name
+    marketing:
+      db: MarketingDb       # Marketing API SQL db name
+    webhooks:
+      db: WebhooksDb        # Webhooks DB     authservice:
+    authservice:
+      db: KeycloakDb        # Keycloak DB
+  mongo:
+    locations:
+      database: LocationsDb
+    marketing:
+      database: MarketingDb
+    webhooksnode:
+      database: WebhooksnodeDb
+  redis:
+    sentinel:
+      master:                     # Redis masterSet name. Allowed values: keep it blank if values of redis.archictecture is standalone
+      port: 26379
+      svc: emarket-basket-data-headless
+    standalone:
+      port: 6379
+      svc: emarket-basket-data-headless      # Name of k8s svc for basket redis
+      constr: emarket-basket-data-headless   # Connection string to Redis used by Basket API
+    keystore:
+      svc: keystore-data    # Name of k8s svc for keystore-data redis
+      constr: keystore-data # Connection string to Redis used as a Keystore (by Identity API)
+  appinsights:
+    key: ""               # App insights to use
+  k8s:                      # inf.k8s defines Kubernetes cluster global config
+    dns:  ""                # k8s external  DNS. This value or ip value MUST BE PROVIDED
+    local: false            # True when deploying on "local K8s" provided by Docker Desktop.
+  hpa:
+    minReplicas: 1
+    maxReplicas: 18
+  misc:                     # inf.misc contains miscellaneous configuration related to infrastructure
+    useLoadTest: false      # If running under loading test or not
+    useAzureStorage: false  # If catalog api uses azure storage or not
+  authservice:
+    svc: keycloak-http
+    port: 80
+    user: keycloak
+    pwd: keycloak
+  minioservice:
+    svc: emarket-minio
+    port: 9000
+    accesskey: minioadmin
+    secretkey: minioadmin
+  tracing:
+    servicename: "emarket-jaeger-agent"
+    serviceport: "6831"
+    traceinterval: "7500"
+
+basket-api:
+  ingress:
+    enabled: false
+
+catalog-api:
+  ingress:
+    enabled: false
+
+image-api:
+  ingress:
+    enabled: false
+
+identity-api:
+  ingress:
+    enabled: false
+
+locations-api:
+  ingress:
+    enabled: false
+
+marketing-api:
+  ingress:
+    enabled: false
+
+webshoppingagg:
+  ingress:
+    enabled: false
+
+mobileshoppingagg:
+  ingress:
+    enabled: false
+
+notification:
+  ingress:
+    enabled: false
+
+webstatus:
+  ingress:
+    enabled: false
+
+webhooks-api:
+  ingress:
+    enabled: false
+
+webhooks-node:
+  ingress:
+    enabled: false
+
+webhooks-web:
+  ingress:
+    enabled: false
+
+webspa:
+  ingress:
+    enabled: false
+
+ordering-api:
+  ingress:
+    enabled: false
+
+ordering-backgroundtasks:
+  ingress:
+    enabled: false
+
+payment-api:
+  ingress:
+    enabled: false
+
+nosql-data:
+  useStatefulSet: true

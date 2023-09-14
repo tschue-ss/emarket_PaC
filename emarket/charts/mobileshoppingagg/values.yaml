@@ -1,0 +1,123 @@
+replicaCount: 1
+clusterName: emarket-cluster
+pathBase: /mobile-agg
+jaeger:
+  tracing:
+    enabled: false
+    service:
+      name: mobileshoppingagg.default
+
+image:
+  repository: emarket/mobileshoppingagg
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8080
+  grpcPort: 8081
+
+dependsOn:
+  - sql-data
+  - rabbitmq
+
+ingress:
+  enabled: true
+  annotations: {}
+  hosts:
+    - chart-example.local
+  tls: []
+
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1200Mi
+  requests:
+     cpu: 800m
+     memory: 800Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# env defines the environment variables that will be declared in the pod
+env:
+  urls:
+  # configmap declares variables which value is taken from the config map defined in template configmap.yaml (name is name of var and key the key in configmap).
+  configmap:
+#    - name: ConnectionString
+#      key: cfgmap__ConnectionString
+#    - name: EMARKET_SQL_DATA_URL
+#      key: cfgmap__EMARKET_SQL_DATA_URL
+#    - name: EMARKET_SQL_DATA_USER
+#      key: cfgmap__EMARKET_SQL_DATA_USER
+#    - name: EMARKET_SQL_DATA_PASSWORD
+#      key: cfgmap__EMARKET_SQL_DATA_PASSWORD
+    - name: EMARKET_AUTH_SERVICE_HOST
+      key: cfgmap__EMARKET_AUTH_SERVICE_HOST
+    - name: EMARKET_EVENTBUS_HOST
+      key: cfgmap__EMARKET_EVENTBUS_HOST
+    - name: EMARKET_EVENTBUS_PORT
+      key: cfgmap__EMARKET_EVENTBUS_PORT
+    - name: EMARKET_EVENTBUS_USERNAME
+      key: cfgmap__EMARKET_EVENTBUS_USERNAME
+    - name: EMARKET_EVENTBUS_PASSWORD
+      key: cfgmap__EMARKET_EVENTBUS_PASSWORD
+    - name: EMARKET_EVENTBUS_SSL
+      key: cfgmap__EMARKET_EVENTBUS_SSL
+    - name: EMARKET_AUTH_SERVICE_PORT
+      key: cfgmap__EMARKET_AUTH_SERVICE_PORT
+    - name: EMARKET_WEBSTATUS_SERVICE_HOST
+      key: cfgmap__EMARKET_WEBSTATUS_SERVICE_HOST
+#    - name: ApplicationInsights__InstrumentationKey
+#      key: all__InstrumentationKey
+#    - name: EventBusConnection
+#      key: all__EventBusConnection
+#    - name: AzureServiceBusEnabled
+#      key: all__UseAzureServiceBus
+#    - name: UseLoadTest
+#      key: cfgmap__EnableLoadTest
+#    - name: IdentityUrl
+#      key: urls__IdentityUrl
+    - name: EMARKET_HTTP_PORT
+      key: cfgmap__EMARKET_HTTP_PORT
+    - name: EMARKET_GRPC_PORT
+      key: cfgmap__EMARKET_GRPC_PORT
+    - name: EMARKET_TRACE_SERVER_HOST
+      key: cfgmap_EMARKET_TRACE_SERVER_HOST
+    - name: EMARKET_TRACE_SERVER_PORT
+      key: cfgmap_EMARKET_TRACE_SERVER_PORT
+
+      # values define environment variables with a fixed value (no configmap involved) (name is name of var, and value is its value)
+  values:
+#    - name: ASPNETCORE_ENVIRONMENT
+#      value: Development
+    - name: OrchestratorType
+      value: 'K8S'
+#    - name: PORT
+#      value: 80
+#    - name: GRPC_PORT
+#      value: "81"      
+probes:
+  liveness:
+#    path: /liveness
+    path: /actuator/health/liveness
+    timeoutSeconds: 5
+    initialDelaySeconds: 60
+    periodSeconds: 15
+#    port: 80
+  readiness:
+#    path: /hc
+    path: /actuator/health/readiness
+    timeoutSeconds: 5
+    initialDelaySeconds: 60
+    periodSeconds: 60
+
+  startupProbe:
+    path: actuator/health/liveness
+    failureThreshold: 30
+    periodSeconds: 10
+

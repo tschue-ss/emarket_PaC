@@ -1,0 +1,134 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: apigwms-vs
+  namespace: default
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - ingress-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /mobileshoppingapigw/catalog-api/
+    - uri:
+        prefix: /mobileshoppingapigw/catalog-api
+    rewrite:
+        uri: /catalog-api/
+    route:
+    - destination:
+        host: catalog-api
+        port:
+          number: 8080
+
+  - match:
+    - uri:
+        prefix: /mobileshoppingapigw/c/
+    rewrite:
+        uri: /catalog-api/
+    route:
+    - destination:
+        host: catalog-api
+        port:
+          number: 8080
+
+  - match:
+    - uri:
+        prefix: /mobileshoppingapigw/ordering-api/
+    - uri:
+        prefix: /mobileshoppingapigw/ordering-api
+    rewrite:
+        uri: /ordering-api/
+    route:
+    - destination:
+        host: ordering-api
+        port:
+          number: 8080
+
+  - match:
+    - uri:
+        prefix: /mobileshoppingapigw/o/
+    rewrite:
+        uri: /ordering-api/
+    route:
+    - destination:
+        host: ordering-api
+        port:
+          number: 8080
+
+  - match:
+    - uri:
+        prefix: /mobileshoppingapigw/basket-api/
+    - uri:
+        prefix: /mobileshoppingapigw/basket-api
+    rewrite:
+        uri: /basket-api/
+    route:
+    - destination:
+        host: basket-api
+        port:
+          number: 8080
+
+  - match:
+    - uri:
+        prefix: /mobileshoppingapigw/b/
+    rewrite:
+        uri: /basket-api/
+    route:
+    - destination:
+        host: basket-api
+        port:
+          number: 8080
+
+
+  - match:
+    - uri:
+        prefix: /mobileshoppingapigw/image-api/
+    - uri:
+        prefix: /mobileshoppingapigw/image-api
+    rewrite:
+        uri: /image-api/
+    route:
+    - destination:
+        host: image-api
+        port:
+          number: 8080
+
+  - match:
+    - uri:
+        prefix: /mobileshoppingapigw/i/
+    rewrite:
+        uri: /image-api/
+    route:
+    - destination:
+        host: image-api
+        port:
+          number: 8080
+
+
+  - match:
+    - uri:
+        prefix: /mobileshoppingapigw/hub/notificationshub/
+    - uri:
+        prefix: /mobileshoppingapigw/hub/notificationshub
+    rewrite:
+        uri: /notificationshub/
+    route:
+    - destination:
+        host: notification
+        port:
+          number: 8080
+          
+  - match:
+    - uri:
+        prefix: /mobileshoppingapigw
+    - uri:
+        prefix: /mobileshoppingapigw/
+    rewrite:
+        uri: /mobile-agg/
+    route:
+    - destination:
+        host: mobileshoppingagg
+        port:
+          number: 8080 

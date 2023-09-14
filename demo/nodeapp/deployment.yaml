@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nodedemo
+  name: nodedemo
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nodedemo
+  template:
+    metadata:
+      labels:
+        app: nodedemo
+    spec:
+      containers:
+      - image: hyuk48/gitops:20220228
+        name: nodedemo

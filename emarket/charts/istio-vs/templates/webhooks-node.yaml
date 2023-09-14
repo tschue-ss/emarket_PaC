@@ -1,0 +1,36 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: webhooksnode-vs
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - ingress-gateway
+  http:
+  - match:
+    - uri:
+        exact: /webhooks-node
+    - uri:
+        prefix: /webhooks-node/*
+    - uri:
+        prefix: /webhooks-node
+    route:
+    - destination:
+        host: webhooks-node
+        port:
+          number: 5000
+
+---
+
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: webhooksnode-dr
+  namespace: default
+spec:
+  host: webhooks-node
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+

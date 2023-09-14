@@ -1,0 +1,163 @@
+{{- $name := include "notification.fullname" . -}}
+{{- $cfgname := printf "%s-%s" "cfg" $name -}}
+{{- $sqlsrv := include "sql-name" . -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "notification.fullname" . }}
+  labels:
+    ufo: {{ $cfgname}}
+    app: {{ template "notification.name" . }}
+    chart: {{ template "notification.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "notification.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "notification.name" . }}
+        release: {{ .Release.Name }}
+      {{ if .Values.global.mesh.enabled -}}
+      annotations:
+        sidecar.istio.io/inject: "true"
+      {{- end }}             
+    spec:
+      {{ if .Values.global.image.secretName -}}
+      imagePullSecrets:
+      - name: {{ .Values.global.image.secretName }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          {{ if .Values.probes -}}
+          {{- if .Values.probes.liveness -}}
+          livenessProbe:
+            httpGet:
+#              port: {{ .Values.probes.liveness.port }}
+              port: {{ .Values.service.port }}
+              path: {{ include "pathBase" . }}/{{ .Values.probes.liveness.path }}
+            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
+          {{- end -}}
+          {{- end }}
+          {{- if .Values.probes -}}
+          {{- if .Values.probes.readiness }}
+          readinessProbe:
+            httpGet:
+#              port: {{ .Values.probes.readiness.port }}
+              port: {{ .Values.service.port }}
+              path: {{ include "pathBase" . }}/{{ .Values.probes.readiness.path }}
+            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
+          {{- end -}}
+          {{- end }}
+          {{- if .Values.probes -}}
+          {{- if .Values.probes.startupProbe }}
+          startupProbe:
+            httpGet:
+              port: {{ .Values.service.port }}
+              path: {{ include "pathBase" . }}/{{ .Values.probes.startupProbe.path }}
+            failureThreshold: {{ .Values.probes.startupProbe.failureThreshold }}
+            periodSeconds: {{ .Values.probes.startupProbe.periodSeconds }}
+          {{- end -}}
+          {{- end }}                      
+          image: "{{ template "fqdn-image" . }}:{{ .Values.global.image.tag }}"
+          imagePullPolicy: {{ .Values.global.image.pullPolicy }}
+          env:
+            - name: EMARKET_MY_POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: PATH_BASE
+              value: {{ include "pathBase" . }}
+            - name: k8sname
+              value: {{ .Values.clusterName }}
+            - name: EMARKET_TRACE_ENABLED
+              value: "{{ .Values.jaeger.tracing.enabled }}"
+            - name: EMARKET_TRACE_SERVICE_NAME
+              value: "{{ .Values.jaeger.tracing.service.name }}"
+          {{- if .Values.env.values -}}
+          {{- range .Values.env.values }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+          {{- end -}}
+          {{- end -}}
+          {{- if .Values.env.configmap -}}
+          {{- range .Values.env.configmap }}
+            - name: {{ .name }}
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ $cfgname }}
+                  key: {{ .key }}
+          {{- end -}}
+          {{- if not (empty .Values.global.redis.sentinel.master) }}
+            - name: EMARKET_KEYSTORE_SENTINEL_MASTER
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ $cfgname }}
+                  key: cfgmap__EMARKET_KEYSTORE_SENTINEL_MASTER
+            - name: EMARKET_KEYSTORE_SENTINEL_SVC
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ $cfgname }}
+                  key: cfgmap__EMARKET_KEYSTORE_SENTINEL_SVC
+            - name: EMARKET_KEYSTORE_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ $cfgname }}
+                  key: cfgmap__EMARKET_KEYSTORE_SENTINEL_PORT
+          {{- else }}
+            - name: EMARKET_KEYSTORE_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ $cfgname }}
+                  key: cfgmap__EMARKET_KEYSTORE_HOST
+            - name: EMARKET_KEYSTORE_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ $cfgname }}
+                  key: cfgmap__EMARKET_KEYSTORE_PORT
+          {{- end }}
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+            - name: grpc
+              containerPort: {{ .Values.service.grpcPort }}
+              protocol: TCP              
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+      initContainers:
+      - name: init-sql-data
+        image: busybox:1.28
+        command: ['sh', '-c', "until nslookup {{ $sqlsrv }}; do echo waiting for {{ $sqlsrv }}; sleep 2; done"]
+      - name: init-eventbus
+        image: busybox:1.28
+        command: ['sh', '-c', "until nslookup {{ .Values.global.eventbus.svc }}; do echo waiting for {{ .Values.global.eventbus.svc }}; sleep 2; done"]
+      - name: init-keystore
+        image: busybox:1.28
+      {{- if not (empty .Values.global.redis.sentinel.master) }}
+        command: ['sh', '-c', "until nslookup {{ .Values.global.redis.sentinel.svc }}; do echo waiting for {{ .Values.global.redis.sentinel.svc }}; sleep 2; done"]
+      {{- else }}
+        command: ['sh', '-c', "until nslookup {{ .Values.global.redis.standalone.svc }}; do echo waiting for {{ .Values.global.redis.standalone.svc }}; sleep 2; done"] 
+      {{- end }}
+    {{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+

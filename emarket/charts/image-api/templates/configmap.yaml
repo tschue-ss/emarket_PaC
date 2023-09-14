@@ -1,0 +1,40 @@
+{{- $name := include "image-api.fullname" . -}}
+{{- $sqlsrv := include "sql-name" . -}}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "cfg-{{ $name }}"
+  labels:
+    app: {{ template "image-api.name" . }}
+    chart: {{ template "image-api.chart" .}}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+data:
+  cfgmap__EMARKET_HTTP_PORT: "{{ .Values.service.port }}"
+  cfgmap__EMARKET_GRPC_PORT: "{{ .Values.service.grpcPort }}"
+  cfgmap__EMARKET_EVENTBUS_HOST: {{ .Values.global.eventbus.svc }}
+  {{- if eq .Values.global.env.eks.enabled true }}
+  cfgmap__EMARKET_MINIO_IMAGE_SERVICE_URL: {{ .Values.global.minio.url }}
+  cfgmap__EMARKET_MINIO_IMAGE_ACCESS_KEY: {{ .Values.global.minio.accesskey }}
+  cfgmap__EMARKET_MINIO_IMAGE_SECRET_KEY: {{ .Values.global.minio.secretkey }}
+  cfgmap__EMARKET_MINIO_IMAGE_S3_IAM_ARN: "{{ .Values.global.minio.iamArn }}"
+  {{- else }}
+  cfgmap__EMARKET_MINIO_IMAGE_SERVICE_URL: {{ .Values.global.minio.url }}
+  cfgmap__EMARKET_MINIO_IMAGE_ACCESS_KEY: {{ .Values.global.minio.accesskey }}
+  cfgmap__EMARKET_MINIO_IMAGE_SECRET_KEY: {{ .Values.global.minio.secretkey }}
+  cfgmap__EMARKET_MINIO_IMAGE_S3_IAM_ARN: "{{ .Values.global.minio.iamArn }}"
+  {{- end }}
+  cfgmap__EMARKET_AUTH_SERVICE_HOST: {{ .Values.global.authservice.svc }}
+  cfgmap__EMARKET_AUTH_SERVICE_PORT: "{{ .Values.global.authservice.port }}"
+  cfgmap__EMARKET_WEBSTATUS_SERVICE_HOST: {{ .Values.global.svc.webstatus }}
+  cfgmap_EMARKET_TRACE_SERVER_HOST: "{{ .Values.global.tracing.servicename }}"
+  cfgmap_EMARKET_TRACE_SERVER_PORT: "{{ .Values.global.tracing.serviceport }}"
+  {{- if not (empty .Values.global.redis.sentinel.master) }}
+  cfgmap__EMARKET_KEYSTORE_SENTINEL_MASTER: {{ .Values.global.redis.sentinel.master }}
+  cfgmap__EMARKET_KEYSTORE_SENTINEL_SVC: {{ .Values.global.redis.sentinel.svc }}
+  cfgmap__EMARKET_KEYSTORE_SENTINEL_PORT: "{{ .Values.global.redis.sentinel.port }}"
+  {{- else }}
+  cfgmap__EMARKET_KEYSTORE_HOST: {{ .Values.global.redis.standalone.svc }}
+  cfgmap__EMARKET_KEYSTORE_PORT: "{{ .Values.global.redis.standalone.port }}"
+  {{- end }}

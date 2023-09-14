@@ -1,0 +1,97 @@
+replicaCount: 1
+clusterName: emarket-cluster
+pathBase: /locations-api
+jaeger:
+  tracing:
+    enabled: true
+    service:
+      name: locations-api.default
+
+image:
+  repository: emarket/locations-api
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 5000
+
+ingress:
+  enabled: false
+  annotations: {}
+  tls: []
+
+resources:
+  limits:
+    cpu: 1500m
+    memory: 2000Mi
+  requests:
+     cpu: 1
+     memory: 1500Mi
+
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# env defines the environment variables that will be declared in the pod
+env:
+  urls:
+  # configmap declares variables which value is taken from the config map defined in template configmap.yaml (name is name of var and key the key in configmap).
+  configmap:
+    - name: EventBusConnection
+      key: all__EventBusConnection
+    - name: EMARKET_NOSQL_DATA_URL
+      key: locations__EMARKET_NOSQL_DATA_URL
+    - name: Database
+      key: locations__Database
+    - name: EMARKET_EVENTBUS_PROTO
+      key: cfgmap__EMARKET_EVENTBUS_PROTO
+    - name: EMARKET_EVENTBUS_HOST
+      key: cfgmap__EMARKET_EVENTBUS_HOST
+    - name: EMARKET_EVENTBUS_PORT
+      key: cfgmap__EMARKET_EVENTBUS_PORT
+    - name: EMARKET_EVENTBUS_USERNAME
+      key: cfgmap__EMARKET_EVENTBUS_USERNAME
+    - name: EMARKET_EVENTBUS_PASSWORD
+      key: cfgmap__EMARKET_EVENTBUS_PASSWORD
+    - name: EMARKET_AUTH_SERVICE_HOST
+      key: cfgmap__EMARKET_AUTH_SERVICE_HOST
+    - name: EMARKET_AUTH_SERVICE_PORT
+      key: cfgmap__EMARKET_AUTH_SERVICE_PORT
+    - name: EMARKET_WEBSTATUS_SERVICE_HOST
+      key: cfgmap__EMARKET_WEBSTATUS_SERVICE_HOST
+    - name: EMARKET_SERVICE_HOST
+      key: cfgmap__EMARKET_SERVICE_HOST
+    - name: EMARKET_IDENTITY_URL
+      key: cfgmap__EMARKET_IDENTITY_URL
+    - name: EMARKET_TRACE_SERVER_HOST
+      key: cfgmap_EMARKET_TRACE_SERVER_HOST
+    - name: EMARKET_TRACE_SERVER_PORT
+      key: cfgmap_EMARKET_TRACE_SERVER_PORT
+
+    # values define environment variables with a fixed value (no configmap involved) (name is name of var, and value is its value)
+  values:
+    - name: FLASK_ENVIRONMENT
+      value: Development
+    - name: OrchestratorType
+      value: 'K8S'
+probes:
+  liveness:
+    path: /liveness
+    initialDelaySeconds: 30
+    periodSeconds: 15
+    #port: 5000
+  readiness:
+    path: /hc
+    timeoutSeconds: 5
+    initialDelaySeconds: 30
+    periodSeconds: 60
+  
+  startupProbe:
+    path: /liveness
+    failureThreshold: 30
+    periodSeconds: 10
+

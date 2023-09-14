@@ -1,0 +1,39 @@
+{{- $name := include "webshoppingagg.fullname" . -}}
+{{- $sqlsrv := include "sql-name" . -}}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "cfg-{{ $name }}"
+  labels:
+    app: {{ template "webshoppingagg.name" . }}
+    chart: {{ template "webshoppingagg.chart" .}}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+data:
+  cfgmap__EMARKET_HTTP_PORT: "{{ .Values.service.port }}"
+  cfgmap__EMARKET_GRPC_PORT: "{{ .Values.service.grpcPort }}"
+  cfgmap__EMARKET_EVENTBUS_HOST: {{ .Values.global.eventbus.svc }}
+  cfgmap__EMARKET_EVENTBUS_PORT: "{{ .Values.global.eventbus.port }}"
+  cfgmap__EMARKET_EVENTBUS_USERNAME: "{{ .Values.global.eventbus.username }}"
+  cfgmap__EMARKET_EVENTBUS_PASSWORD: "{{ .Values.global.eventbus.password }}"
+  cfgmap__EMARKET_EVENTBUS_SSL: "{{ .Values.global.eventbus.ssl.enabled }}"
+  cfgmap__EMARKET_AUTH_SERVICE_HOST: {{ .Values.global.authservice.svc }}
+  cfgmap__EMARKET_AUTH_SERVICE_PORT: "{{ .Values.global.authservice.port }}"
+  cfgmap__EMARKET_WEBSTATUS_SERVICE_HOST: {{ .Values.global.svc.webstatus }}
+  cfgmap_EMARKET_TRACE_SERVER_HOST: "{{ .Values.global.tracing.servicename }}"
+  cfgmap_EMARKET_TRACE_SERVER_PORT: "{{ .Values.global.tracing.serviceport }}"
+  {{- if not (empty .Values.global.redis.sentinel.master) }}
+  cfgmap__EMARKET_KEYSTORE_SENTINEL_MASTER: {{ .Values.global.redis.sentinel.master }}
+  cfgmap__EMARKET_KEYSTORE_SENTINEL_SVC: {{ .Values.global.redis.sentinel.svc }}
+  cfgmap__EMARKET_KEYSTORE_SENTINEL_PORT: "{{ .Values.global.redis.sentinel.port }}"
+  {{- else }}
+  cfgmap__EMARKET_KEYSTORE_HOST: {{ .Values.global.redis.standalone.svc }}
+  cfgmap__EMARKET_KEYSTORE_PORT: "{{ .Values.global.redis.standalone.port }}"
+  {{- end }}
+
+#  cfgmap__EnableLoadTest: "{{ .Values.global.misc.useLoadTest }}"
+#  urls__IdentityUrl: http://{{ .Values.global.svc.identity }}
+#  all__EventBusConnection: {{ .Values.global.eventbus.svc }}
+#  all__InstrumentationKey: "{{ .Values.global.appinsights.key }}"
+#  all__UseAzureServiceBus: "{{ .Values.global.eventbus.useAzure }}"

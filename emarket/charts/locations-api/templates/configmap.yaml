@@ -1,0 +1,34 @@
+{{- $name := include "locations-api.fullname" . -}}
+{{- $mongo := include "mongo-name" . -}}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "cfg-{{ $name }}"
+  labels:
+    app: {{ template "locations-api.name" . }}
+    chart: {{ template "locations-api.chart" .}}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+data:
+  all__EventBusConnection: {{ .Values.global.eventbus.svc }}
+  #locations__ConnectionString: mongodb://{{ $mongo }}
+  {{- if eq .Values.global.mongo.architecture "standalone" }}
+  locations__EMARKET_NOSQL_DATA_URL: mongodb://{{ $mongo }}
+  {{- else }}
+  locations__EMARKET_NOSQL_DATA_URL: mongodb://{{ .Values.global.mongo.hostReplicaset }},{{ .Values.global.mongo.hostArbiter }}?replicaSet=rs0
+  {{- end }}
+  locations__Database: {{ .Values.global.mongo.locations.database }}
+  cfgmap__EMARKET_EVENTBUS_PROTO: {{ .Values.global.eventbus.proto }}
+  cfgmap__EMARKET_EVENTBUS_HOST: {{ .Values.global.eventbus.svc }}
+  cfgmap__EMARKET_EVENTBUS_PORT: "{{ .Values.global.eventbus.port }}"
+  cfgmap__EMARKET_EVENTBUS_USERNAME: {{ .Values.global.eventbus.username }}
+  cfgmap__EMARKET_EVENTBUS_PASSWORD: {{ .Values.global.eventbus.password }}
+  cfgmap__EMARKET_AUTH_SERVICE_HOST: {{ .Values.global.authservice.svc }}
+  cfgmap__EMARKET_AUTH_SERVICE_PORT: "{{ .Values.global.authservice.port }}"
+  cfgmap__EMARKET_WEBSTATUS_SERVICE_HOST: {{ .Values.global.svc.webstatus }}
+  cfgmap__EMARKET_SERVICE_HOST: {{ .Values.global.svc.locations }}
+  cfgmap__EMARKET_IDENTITY_URL: http://{{ .Values.global.svc.identity }}
+  cfgmap_EMARKET_TRACE_SERVER_HOST: "{{ .Values.global.tracing.servicename }}"
+  cfgmap_EMARKET_TRACE_SERVER_PORT: "{{ .Values.global.tracing.serviceport }}"
+

@@ -1,0 +1,63 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: orderingapi-vs
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - ingress-gateway
+  http:
+  - match:
+    - uri:
+        exact: /ordering-api/swagger-ui
+    - uri:
+        prefix: /ordering-api/swagger-ui
+    - uri:
+        prefix: /ordering-api/swagger-ui/
+    route:
+    - destination:
+        host: ordering-api
+        port:
+          number: 8080
+
+  - match:
+    - uri:
+        regex: /ordering-api
+    route:
+    - destination:
+        host: ordering-api
+        port:
+          number: 8080
+---
+
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: orderingapi-dr
+  namespace: default
+spec:
+  host: ordering-api
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+      
+      
+---
+ 
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: oredering-authz
+  namespace: istio-system
+spec:
+  action: ALLOW
+  rules:
+    - to:
+      - operation:
+          methods: ["GET","POST","PUT","DELETE"]
+          paths: ["/webshoppingapigw/o/*","/webshoppingapigw/ordering-api/*"]
+      when:
+      - key: request.auth.claims[iss]
+        values: ["*"]
+

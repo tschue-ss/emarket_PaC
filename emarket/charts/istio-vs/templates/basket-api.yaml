@@ -1,0 +1,66 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: basketapi-vs
+  namespace: default
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - ingress-gateway
+  http:
+  - match:
+    - uri:
+        exact: /basket-api
+    - uri:
+        prefix: /basket-api
+    - uri:
+        prefix: /basket-api/
+    - uri:
+        prefix: /basket-api/
+    route:
+    - destination:
+        host: basket-api
+        port:
+          number: 8080
+
+  - match:
+    - uri:
+        regex: /basket-api
+    route:
+    - destination:
+        host: basket-api
+        port:
+          number: 8080
+---
+
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: basketapi-dr
+  namespace: default
+spec:
+  host: basket-api
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+      
+---
+ 
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: basket-authz
+  namespace: istio-system
+spec:
+  action: ALLOW
+  rules:
+    - to:
+      - operation:
+          methods: ["GET","POST","PUT","DELETE"]
+          paths: ["/webshoppingapigw/basket-api/api/v1/Basket/*"]
+      when:
+      - key: request.auth.claims[iss]
+        values: ["*"]
+
+

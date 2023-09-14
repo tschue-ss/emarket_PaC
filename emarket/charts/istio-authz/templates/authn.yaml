@@ -1,0 +1,26 @@
+apiVersion: security.istio.io/v1beta1
+kind: RequestAuthentication
+metadata:
+  name: "jwt-example"
+  namespace: istio-system
+spec:
+  selector:
+    matchLabels:
+      istio: ingressgateway
+  jwtRules:
+  - issuer: "https://{{ .Values.global.app.url.default }}/identity/connect/auth/realms/emarket"
+    jwksUri: "http://keycloak-http.default.svc.cluster.local/identity/connect/auth/realms/emarket/protocol/openid-connect/certs"
+    outputPayloadToHeader: x-jwt-payload
+    forwardOriginalToken: true
+  - issuer: "https://{{ .Values.global.app.url.default }}/identity/connect/auth/realms/master"
+    jwksUri: "http://keycloak-http.default.svc.cluster.local/identity/connect/auth/realms/master/protocol/openid-connect/certs"
+    outputPayloadToHeader: x-jwt-payload
+    forwardOriginalToken: true
+  - issuer: "https://{{ .Values.global.app.url.tenant }}/identity/connect/auth/realms/tenant"
+    jwksUri: "http://keycloak-http.default.svc.cluster.local/identity/connect/auth/realms/tenant/protocol/openid-connect/certs"
+    outputPayloadToHeader: x-jwt-payload
+    forwardOriginalToken: true
+  - issuer: "https://{{ .Values.global.app.url.default }}/identity/connect/auth/realms/emarket-admin"
+    jwksUri: "http://keycloak-http.default.svc.cluster.local/identity/connect/auth/realms/emarket-admin/protocol/openid-connect/certs"
+    outputPayloadToHeader: x-jwt-payload
+    forwardOriginalToken: true

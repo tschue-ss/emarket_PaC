@@ -1,0 +1,87 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: lua-filter
+  namespace: istio-system
+spec:
+  workloadSelector:
+    labels:
+      istio: ingressgateway
+  configPatches:
+    - applyTo: HTTP_FILTER
+      match:
+        context: GATEWAY
+        listener:
+          filterChain:
+            filter:
+              name: "envoy.filters.network.http_connection_manager"
+              subFilter:
+                name: "envoy.filters.http.jwt_authn"
+      patch:
+        operation: INSERT_AFTER
+        value:
+          name: envoy.filters.http.lua
+          typed_config:
+            "@type": "type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua"
+            inlineCode: |
+              function envoy_on_request(request)
+                  request:logInfo("Enter  envoy_on_request")
+                  local ok, message = pcall(handle_request, request)
+                  if not ok then
+                      request:logInfo("Error.... handle request not ok")
+                      request:logWarn(message)
+                  end
+                  request:logInfo("Exit  envoy_on_request")
+              end
+              
+              function handle_request(request)
+                  request:logInfo("Enter handle_request")
+                  local meta = request:streamInfo():dynamicMetadata()
+                  if not meta then
+                      request:logInfo("Error.... Not able to get dynamicMetadata")
+                      return
+                  end
+                  local jwt_filter_meta = meta:get("envoy.filters.http.jwt_authn")
+                  if not jwt_filter_meta then
+                      request:logInfo("Error....jwt_filter_meta not present")
+                      return
+                  end
+                  local issuer = ''           
+                  for key ,value in pairs(jwt_filter_meta) do
+                      request:logInfo("key: "..key)
+                      issuer = key
+                      
+                  end
+                  request:logInfo("key issuer: "..issuer)
+
+                  local claims = jwt_filter_meta[issuer]
+                  if not claims then
+                      request:logInfo("Error...claims not present")
+                      return
+                  end
+                  local iss = claims["iss"]
+                  if not iss then
+                      request:logInfo("Error... iss not present")
+                      return
+                  end
+                  request:logInfo("iss: "..iss)
+                  request:headers():add("x-issuer-id", iss)
+                  local sub = claims["sub"]
+                  if not sub then
+                      request:logInfo("Error... sub not present")
+                      return
+                  end
+                  request:logInfo("sub: "..sub)
+                  request:headers():add("x-user-id", sub)
+                  
+                  local username = claims["preferred_username"]
+                  if not username then
+                      request:logInfo("Error... preffered username not present")
+                      return
+                  end
+                  request:logInfo("username: "..username)
+                  request:headers():add("x-preferred-username-id", username)                  
+               
+                  request:logInfo("Exit handle_request")
+              end
+

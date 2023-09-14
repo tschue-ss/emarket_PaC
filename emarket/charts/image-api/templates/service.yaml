@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.global.svc.image }}
+  labels:
+    app: {{ template "image-api.name" . }}
+    chart: {{ template "image-api.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.port }}
+#      {{- if eq .Values.service.type "NodePort" }}
+#      nodePort: {{ .Values.service.nodePort }}
+#      {{- end }}
+      protocol: TCP
+      name: http
+    - port: {{ .Values.service.grpcPort }}
+      targetPort: {{ .Values.service.grpcPort }}
+      protocol: TCP
+      name: grpc
+  selector:
+    app: {{ template "image-api.name" . }}
+    release: {{ .Release.Name }}

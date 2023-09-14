@@ -1,0 +1,118 @@
+{{- $name := include "webhooks-node.fullname" . -}}
+{{- $cfgname := printf "%s-%s" "cfg" $name -}}
+{{- $nosqlsrv := include "mongo-name" . -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "webhooks-node.fullname" . }}
+  labels:
+    ufo: {{ $cfgname}}
+    app: {{ template "webhooks-node.name" . }}
+    chart: {{ template "webhooks-node.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "webhooks-node.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "webhooks-node.name" . }}
+        release: {{ .Release.Name }}
+      {{ if .Values.global.mesh.enabled -}}
+      annotations:
+        sidecar.istio.io/inject: "true"
+      {{- end }}             
+    spec:
+      {{ if .Values.global.image.secretName -}}
+      imagePullSecrets:
+      - name: {{ .Values.global.image.secretName }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          {{ if .Values.probes -}}
+          {{- if .Values.probes.liveness -}}
+          livenessProbe:
+            httpGet:
+#              port: {{ .Values.probes.liveness.port }}
+              port: {{ .Values.service.port }}
+              path: {{ include "pathBase" . }}/{{ .Values.probes.liveness.path }}
+            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
+          {{- end -}}
+          {{- end -}}
+          {{- if .Values.probes -}}
+          {{- if .Values.probes.readiness }}
+          readinessProbe:
+            httpGet:
+#              port: {{ .Values.probes.readiness.port }}
+              port: {{ .Values.service.port }}
+              path: {{ include "pathBase" . }}/{{ .Values.probes.readiness.path }}
+            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
+          {{- end -}}
+          {{- end }}                      
+          image: "{{ template "fqdn-image" . }}:{{ .Values.global.image.tag }}"
+          imagePullPolicy: {{ .Values.global.image.pullPolicy }}
+          env:
+            - name: EMARKET_MY_POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: PATH_BASE
+              value: {{ include "pathBase" . }}
+            - name: k8sname
+              value: {{ .Values.clusterName }}
+          {{- if .Values.env.values -}}
+          {{- range .Values.env.values }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+          {{- end -}}
+          {{- end -}}
+          {{- if .Values.env.configmap -}}
+          {{- range .Values.env.configmap }}
+            - name: {{ .name }}
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ $cfgname }}
+                  key: {{ .key }}
+          {{- end -}}
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+#            - name: grpc
+#              containerPort: {{ .Values.service.grpcPort }}
+#              protocol: TCP              
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+      initContainers:
+      - name: init-nosql-data
+        image: busybox:1.28
+        {{- if eq .Values.global.mongo.architecture "standalone" }}
+        command: ['sh', '-c', "until nslookup {{ $nosqlsrv }}; do echo waiting for {{ $nosqlsrv }}; sleep 2; done"]
+        {{- else }}
+        command: ['sh', '-c', "until nslookup {{ .Values.global.mongo.hostReplicaset }}; do echo waiting for {{ .Values.global.mongo.hostReplicaset }}; sleep 2; done"]
+        {{- end }}
+      - name: init-eventbus
+        image: busybox:1.28
+        command: ['sh', '-c', "until nslookup {{ .Values.global.eventbus.svc }}; do echo waiting for {{ .Values.global.eventbus.svc }}; sleep 2; done"]
+    {{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+

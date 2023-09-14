@@ -1,0 +1,104 @@
+replicaCount: 1
+clusterName: emarket-cluster
+pathBase: /image-api
+jaeger:
+  tracing:
+    enabled: true
+    service:
+      name: image-api.default
+
+image:
+  repository: emarket/image-api
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8080
+  grpcPort: 8081
+
+
+ingress:
+  enabled: true
+  annotations: {}
+  hosts:
+    - chart-example.local
+  tls: []
+
+
+resources:
+  limits:
+    cpu: 1500m
+    memory: 3000Mi
+  requests:
+     cpu: 1000m
+     memory: 3000Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# env defines the environment variables that will be declared in the pod
+env:
+  urls:
+  # configmap declares variables which value is taken from the config map defined in template configmap.yaml (name is name of var and key the key in configmap).
+  configmap:
+#    - name: ConnectionString
+#      key: cfgmap__ConnectionString
+    - name: EMARKET_EVENTBUS_HOST
+      key: cfgmap__EMARKET_EVENTBUS_HOST
+    - name: EMARKET_MINIO_IMAGE_SERVICE_URL
+      key: cfgmap__EMARKET_MINIO_IMAGE_SERVICE_URL
+    - name: EMARKET_MINIO_IMAGE_ACCESS_KEY
+      key: cfgmap__EMARKET_MINIO_IMAGE_ACCESS_KEY
+    - name: EMARKET_MINIO_IMAGE_SECRET_KEY
+      key: cfgmap__EMARKET_MINIO_IMAGE_SECRET_KEY
+    - name: EMARKET_MINIO_IMAGE_S3_IAM_ARN
+      key: cfgmap__EMARKET_MINIO_IMAGE_S3_IAM_ARN
+    - name: EMARKET_AUTH_SERVICE_HOST
+      key: cfgmap__EMARKET_AUTH_SERVICE_HOST
+    - name: EMARKET_AUTH_SERVICE_PORT
+      key: cfgmap__EMARKET_AUTH_SERVICE_PORT
+    - name: EMARKET_WEBSTATUS_SERVICE_HOST
+      key: cfgmap__EMARKET_WEBSTATUS_SERVICE_HOST
+    - name: EMARKET_HTTP_PORT
+      key: cfgmap__EMARKET_HTTP_PORT
+    - name: EMARKET_GRPC_PORT
+      key: cfgmap__EMARKET_GRPC_PORT
+    - name: EMARKET_TRACE_SERVER_HOST
+      key: cfgmap_EMARKET_TRACE_SERVER_HOST
+    - name: EMARKET_TRACE_SERVER_PORT
+      key: cfgmap_EMARKET_TRACE_SERVER_PORT
+
+      # values define environment variables with a fixed value (no configmap involved) (name is name of var, and value is its value)
+  values:
+#    - name: ASPNETCORE_ENVIRONMENT
+#      value: Development
+    - name: OrchestratorType
+      value: 'K8S'
+#    - name: PORT
+#      value: 80
+#    - name: GRPC_PORT
+#      value: "81"      
+probes:
+  liveness:
+#    path: /liveness
+    path: actuator/health/liveness
+    timeoutSeconds: 15
+    initialDelaySeconds: 60
+    periodSeconds: 15
+#    port: 80
+  readiness:
+#    path: /hc
+    path: actuator/health/readiness
+    timeoutSeconds: 15
+    initialDelaySeconds: 60
+    periodSeconds: 60
+
+  startupProbe:
+    path: actuator/health/liveness
+    failureThreshold: 30
+    periodSeconds: 10
+

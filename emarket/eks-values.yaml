@@ -1,0 +1,340 @@
+global:
+  app:
+    ## @param global.app.name emarket application name
+    ##
+    name: emarket
+    ## @param global.app.namespace to deploy emarket application
+    ##
+    namespace: default
+    build-images:
+      enabled: true
+    ## @param
+    ##
+    push-images:
+      enabled: true
+    ## @param
+    ##
+    clean-existing:
+      enabled: true
+    ## @param global.app.url
+    ##
+    ## @param global.app.url route53 url's for default and tenant app 
+    ##
+    url:
+      default: msa-emarket.mspt2-miracom2.click
+      domain: .mspt2-miracom2.click
+  ## @param global.env.kubernetes.enabled to enable the deployment cluster env
+  ##
+  image:
+    registry: 984839034604.dkr.ecr.us-east-1.amazonaws.com
+    #secretName: test
+    tag: t2hub
+  env:
+    kubernetes:
+      enabled: false
+    eks:
+      enabled: true
+  ## @param global.lightweight to enable/disable the optional components, allowed values are 'true' or 'false'
+  ##
+  lightweight:
+    grafana:
+      enabled: true
+    prometheus:
+      enabled: true
+    elasticsearch:
+      enabled: true
+    fluentd:
+      enabled: true
+    kiali-server:
+      enabled: true
+    webhooks-node:
+      enabled: true
+    webhooks-web:
+      enabled: true
+  ## @param global.mesh.enabled to enable/disable the service istio mesh sidecar container, allowed values are 'true' or 'false'
+  ##
+  mesh:
+    enabled: true
+  ## @param global.kibanaEnabled to enable/disable the kibana, allowed values are 'true' or 'false'
+  ##
+  kibanaEnabled: true
+  ## @param global.tracing.enabled to enable/disable the jaeger tracing for all microservices, allowed values are 'true' or 'false'
+  ##
+  tracing:
+    enabled: true
+  ## @param global.high-availablility to enable/disable the high-availablility of components, allowed values are 'true' or 'false'
+  ##
+  high-availability:
+    mongodb:
+      enabled: false
+    rabbitmq:
+      enabled: false
+    elasticseach:
+      enabled: false
+    keycloak:
+      enabled: false
+    minio:
+      enabled: false
+    istio-ingress:
+      enabled: false
+  hpa:
+    minReplicas: 1
+    maxReplicas: 1
+  ## @param global.registry.enabled to enable/disable the container registry, allowed values are 'true' or 'false'
+  ##
+  registry:
+    ## @param global.registry.enabled to enable/disable ECR Registry, allowed values are 'true' or 'false'
+    ##
+    enabled: true
+    ## @param global.registry.url URI for ECR private registry
+    ##
+    url: 984839034604.dkr.ecr.us-east-1.amazonaws.com
+    ## @param global.registry.username Username to login into ECR private registry
+    ##
+    username: AWS
+    ## @param global.registry.region AWS Region in which ECR private registry exists
+    ##
+    region: us-east-1
+  minio:
+    url: http://emarket-minio
+    port: 9000
+    accesskey: minioadmin
+    secretkey: minioadmin
+    region: empty
+    iamArn: empty
+  sql:
+    ## @param global.sql.host AWS RDS service endpoint
+    ##
+    host: kwangcheol-keycloackdb.cf20pihkxny7.us-east-1.rds.amazonaws.com
+    ## @param global.sql.port AWS RDS service port
+    ##
+    port: 3306
+    common:
+      ## @param global.sql.common.user AWS RDS service username
+      ##
+      user: admin
+      pwd: 2IPgPiqe4D
+      pid: Developer
+  mongo:
+    architecture: standalone
+    host: nosql-data
+    hostReplicaset: nosql-data-headless
+    hostArbiter: nosql-data-arbiter-headless
+  redis:
+    architecture: standalone
+    ## @param global.redis.stanalone AWS ElastiCache Service Configuration
+    ##
+    standalone:
+      port: 6379
+      svc: kwangcheol-redis-cluster.n1yf2u.0001.use1.cache.amazonaws.com
+  eventbus:
+      svc:  rabbitmq
+      constr:  rabbitmq
+      port: 5672
+      username: guest
+      password: guest
+      proto: amqp
+      ssl:
+        enabled: false
+
+## Section for all subcharts to set the value
+
+minio:
+  mode: standalone
+  persistence:
+   mountPath: /data
+  statefulset:
+   replicaCount: 1
+   zones: 1
+   drivesPerNode: 1
+
+rabbitmq:
+  replicaCount: 1
+
+elasticsearch:
+  master:
+    replicas: 1
+  coordinating:
+    replicas: 1
+  data:
+    replicas: 1
+
+fluentd:
+  logs:
+    path: /var/lib/docker/containers
+
+jaeger:
+  provisionDataStore:
+   cassandra: false
+  storage:
+   type: elasticsearch
+   elasticsearch:
+     host: emarket-coordinating-only
+     port: 9200
+
+oauth2-proxy:
+  enabled: true
+
+## Resource Config for eMarket Microservices
+
+basket-api:
+  resources:
+    limits:
+      cpu: 1500m
+      memory: 3000Mi
+    requests:
+      cpu: 150m
+      memory: 150Mi
+
+catalog-api:
+  resources:
+    limits:
+      cpu: 1500m
+      memory: 3000Mi
+    requests:
+      cpu: 150m
+      memory: 150Mi
+
+identity-api:
+  resources:
+    limits:
+      cpu: 1500m
+      memory: 1000Mi
+    requests:
+      cpu: 150m
+      memory: 150Mi
+
+image-api:
+  resources:
+    limits:
+      cpu: 1500m
+      memory: 3000Mi
+    requests:
+      cpu: 150m
+      memory: 150Mi
+
+keycloak:
+  replica : 1
+  resources:
+    limits:
+      cpu: 1500m
+      memory: 2000Mi
+    requests:
+      cpu: 300m
+      memory: 300Mi
+
+locations-api:
+  resources:
+    limits:
+      cpu: 1500m
+      memory: 2000Mi
+    requests:
+      cpu: 150m
+      memory: 150Mi
+
+marketing-api:
+  resources:
+    limits:
+      cpu: 1500m
+      memory: 3000Mi
+    requests:
+      cpu: 150m
+      memory: 150Mi
+
+mobileshoppingagg:
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1200Mi
+    requests:
+      cpu: 150m
+      memory: 150Mi
+notification:
+  resources:
+    limits:
+      cpu: 800m
+      memory: 1200Mi
+    requests:
+      cpu: 180m
+      memory: 100Mi
+
+ordering-api:
+  resources:
+    limits:
+      cpu: 1500m
+      memory: 3000Mi
+    requests:
+      cpu: 150m
+      memory: 150Mi
+
+ordering-backgroundtasks:
+  resources:
+    limits:
+      cpu: 800m
+      memory: 1200Mi
+    requests:
+      cpu: 150m
+      memory: 150Mi
+
+payment-api:
+  resources:
+    limits:
+      cpu: 700m
+      memory: 800Mi
+    requests:
+      cpu: 150m
+      memory: 150Mi
+
+webhooks-api:
+  resources:
+    limits:
+      cpu: 800m
+      memory: 1200Mi
+    requests:
+      cpu: 150m
+      memory: 150Mi
+
+webhooks-web:
+  resources:
+    limits:
+      cpu: 300m
+      memory: 500Mi
+    requests:
+      cpu: 150m
+      memory: 150Mi
+
+webhooks-node:
+  resources:
+    limits:
+      cpu: 300m
+      memory: 700Mi
+    requests:
+      cpu: 150m
+      memory: 150Mi
+
+webspa:
+  resources:
+    limits:
+      cpu: 300m
+      memory: 500Mi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+
+webshoppingagg:
+  resources:
+    limits:
+      cpu: 1500m
+      memory: 1500Mi
+    requests:
+      cpu: 150m
+      memory: 150Mi
+
+webstatus:
+  resources:
+    limits:
+      cpu: 1500m
+      memory: 1500Mi
+    requests:
+      cpu: 150m
+      memory: 150Mi

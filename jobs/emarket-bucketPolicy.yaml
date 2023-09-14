@@ -1,0 +1,13 @@
+apiVersion: v1
+data:
+  emarket-policy.json: "{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Effect\":
+    \"Allow\",\n      \"Principal\": {\n           \"AWS\": \"*\"\n      },\n      \"Action\":
+    [\n        \"s3:GetObject\"\n      ],\n      \"Resource\": \"arn:aws:s3:::emarket/*\"\n
+    \   },\n    {\n      \"Effect\": \"Allow\",\n      \"Principal\": {\n           \"AWS\":
+    \"arn:aws:iam::924755424551:user/msadev\"\n      },\n      \"Action\": [\n        \"s3:PutObject\",\n\t\"s3:GetObject\",\n\t\"s3:AbortMultipartUpload\",\n
+    \       \"s3:DeleteObject\",\n        \"s3:GetObject\",\n        \"s3:ListMultipartUploadParts\"\n
+    \      ],\n      \"Resource\": \"arn:aws:s3:::emarket/*\"\n      }\n  ]\n}\n"
+kind: ConfigMap
+metadata:
+  name: emarket-bucket-policy
+  namespace: default

@@ -1,0 +1,70 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: rabbitmq
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - ingress-gateway
+  http:
+  - match:
+    - uri:
+        exact: /rabbbitmq
+    - uri:
+        prefix: /rabbitmq
+    - uri:
+        prefix: /js
+    route:
+    - destination:
+        host: rabbitmq.default.svc.cluster.local
+        port:
+          number: 15672
+  - match:
+    - uri:
+        regex: /rabbbitmq
+    route:
+    - destination:
+        host: rabbitmq.default.svc.cluster.local
+        port:
+          number: 15672
+
+  - match:
+    - uri:
+        regex: /js
+    route:
+    - destination:
+        host: rabbitmq.default.svc.cluster.local
+        port:
+          number: 15672
+
+---
+
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: rabbitmq
+  namespace: default
+spec:
+  host: rabbitmq.default.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+      
+---
+
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: rabbitmq-authz
+  namespace: istio-system
+spec:
+  action: ALLOW
+  rules:
+    - to:
+      - operation:
+          methods: ["GET","POST"]
+          paths: ["/rabbitmq*"]
+
+
+

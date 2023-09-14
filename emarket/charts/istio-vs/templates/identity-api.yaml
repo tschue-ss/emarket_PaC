@@ -1,0 +1,64 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: identityapi-vs
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - ingress-gateway
+  http:
+  - match:
+    - uri:
+        exact: /identity/account
+    - uri:
+        prefix: /identity/account
+    - uri:
+        prefix: /identity/account/address
+    - uri:
+        prefix: /identity/account/payments
+    route:
+    - destination:
+        host: identity-api
+        port:
+          number: 8080
+
+  - match:
+    - uri:
+        regex: /identity/account
+    route:
+    - destination:
+        host: identity-api
+        port:
+          number: 8080
+---
+
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: identity-dr
+  namespace: default
+spec:
+  host: identity-api
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+
+---
+
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: identity-authz
+  namespace: istio-system
+spec:
+  action: ALLOW
+  rules:
+    - to:
+      - operation:
+          methods: ["GET","POST","PUT"]
+          paths: ["/identity/account/*"]
+      when:
+      - key: request.auth.claims[iss]
+        values: ["*"]
+

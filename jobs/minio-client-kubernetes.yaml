@@ -1,0 +1,38 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+ name: minio-client
+spec:
+ template:
+  metadata:
+   name: minioclient
+   labels:
+    app: minioclient
+   annotations:
+    "helm.sh/hook": pre-install
+    sidecar.istio.io/inject: "false"
+  spec:
+   initContainers:
+   - name: init-minio
+     image: 984839034604.dkr.ecr.us-east-1.amazonaws.com/emarket/mc:t2hub
+     imagePullPolicy: IfNotPresent
+     command: ["/bin/sh","-c"]
+     args: ['while [ $(curl -o /dev/null -s -w "%{http_code}\n" http://emarket-minio:9000/minio/health/cluster) -ne 200 ]; do sleep 10; echo "health check failed . Waiting for the minio service..."; done']
+   containers:
+   - name: minioclient
+     image: 984839034604.dkr.ecr.us-east-1.amazonaws.com/emarket/mc:t2hub
+     env:
+      - name: MINIO_ACCESS_KEY
+        value: minioadmin
+      - name: MINIO_SECRET_KEY
+        value: minioadmin
+      - name: BUCKET_NAME_DEFAULT
+        value: emarket
+      - name: DOMAIN
+        value: emarket-minio.default.svc.cluster.local
+     resources:
+      limits:
+       cpu: "1"
+     command: ["/bin/sh"]
+     args: ["-c" , "mc config host add minio http://$(DOMAIN):9000 $(MINIO_ACCESS_KEY) $(MINIO_SECRET_KEY); mc mb minio/$(BUCKET_NAME_DEFAULT);  mc policy set public minio/$(BUCKET_NAME_DEFAULT);  mc cp -r images/*  minio/$(BUCKET_NAME_DEFAULT); "]
+   restartPolicy: Never

@@ -1,0 +1,50 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: webhooks-vs
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - ingress-gateway
+  http:
+  - match:
+    - uri:
+        exact: /webhooks-web
+    - uri:
+        prefix: /webhooks-web
+    - uri:
+        prefix: /webhooks-web/login
+    - uri:
+        prefix: /webhooks-web/images
+    - uri:
+        prefix: /webhooks-web/webhooksregister
+    route:
+    - destination:
+        host: webhooks-client
+        port:
+          number: 80
+  - match:
+    - uri:
+        regex: /webhooks-web
+    route:
+    - destination:
+        host: webhooks-client
+        port:
+          number: 80
+
+
+---
+
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: webhook-dr
+  namespace: default
+spec:
+  host: webhooks-client.default.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+
+

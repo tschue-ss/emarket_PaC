@@ -1,0 +1,69 @@
+replicaCount: 1
+clusterName: emarket-cluster
+pathBase: /
+
+image:
+  repository: emarket/webspa
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: true
+  annotations: {}
+  tls: []
+
+
+resources:
+  limits:
+    cpu: 300m
+    memory: 500Mi
+  requests:
+     cpu: 200m
+     memory: 256Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# env defines the environment variables that will be declared in the pod
+env:
+  urls:
+  # configmap declares variables which value is taken from the config map defined in template configmap.yaml (name is name of var and key the key in configmap).
+  configmap:
+    - name: ApplicationInsights__InstrumentationKey
+      key: all__InstrumentationKey
+    - name: UseLoadTest
+      key: all_EnableLoadTest
+    - name: PurchaseUrl
+      key: urls__apigwws
+    - name: CallBackUrl
+      key: urls__spa
+    - name: IdentityUrl
+      key: urls__IdentityUrl
+    - name: MarketingUrl
+      key: urls__apigwwm
+    - name: IdentityUrlHC
+      key: internalurls__identity__hc      
+    - name: SignalrHubUrl
+      key: urls__apigwws
+      # values define environment variables with a fixed value (no configmap involved) (name is name of var, and value is its value)
+  values:
+    - name: ASPNETCORE_ENVIRONMENT
+      value: Development
+    - name: ASPNETCORE_URLS
+      value: http://0.0.0.0:80
+    - name: OrchestratorType
+      value: 'K8S'
+    - name: IsClusterEnv
+      value: 'True'
+
+version:
+  ver1: v1
+  ver2: v2
+

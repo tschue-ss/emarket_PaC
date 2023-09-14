@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.global.svc.webstatus }}
+  labels:
+    app: {{ template "webstatus.name" . }}
+    chart: {{ template "webstatus.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.port }}
+#      {{- if eq .Values.service.type "NodePort" }}
+#      nodePort: {{ .Values.service.nodePort }}
+#      {{- end }}
+      protocol: TCP
+      name: http
+    - port: {{ .Values.service.grpcPort }}
+      targetPort: {{ .Values.service.grpcPort }}
+      protocol: TCP
+      name: grpc
+  selector:
+    app: {{ template "webstatus.name" . }}
+    release: {{ .Release.Name }}

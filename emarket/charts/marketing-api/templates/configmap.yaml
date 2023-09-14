@@ -1,0 +1,41 @@
+{{- $name := include "marketing-api.fullname" . -}}
+{{- $identity := include "url-of" (list .Values.global.ingress.entries.identity .) -}}
+{{- $webshoppingapigw := include "url-of" (list .Values.global.ingress.entries.webshoppingapigw .) -}}
+{{- $mongo := include "mongo-name" . -}}
+{{- $sqlsrv := include "sql-name" . -}}
+{{- $protocol := include "protocol" . -}}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "cfg-{{ $name }}"
+  labels:
+    app: {{ template "marketing-api.name" . }}
+    chart: {{ template "marketing-api.chart" .}}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+data:
+  all_EnableLoadTest: "{{ .Values.global.misc.useLoadTest }}"
+  internalurls__IdentityUrl: http://{{ .Values.global.svc.identity }}
+  urls__IdentityUrl: {{ $protocol }}://{{ $identity }}  
+  marketing__EMARKET_SQL_DATA_URL: mysql+pymysql://{{ .Values.global.sql.common.user }}:{{ .Values.global.sql.common.pwd }}@{{ $sqlsrv }}/{{ .Values.global.sql.marketing.db }}?charset=utf8
+  marketing__EMARKET_SQL_DATA_URL: mysql+pymysql://{{ .Values.global.sql.common.user }}:{{ .Values.global.sql.common.pwd }}@{{ $sqlsrv }}/{{ .Values.global.sql.marketing.db }}?charset=utf8
+  {{- if eq .Values.global.mongo.architecture "standalone" }}
+  marketing__EMARKET_NOSQL_DATA_URL: mongodb://{{ $mongo }}
+  {{- else }}
+  marketing__EMARKET_NOSQL_DATA_URL: mongodb://{{ .Values.global.mongo.hostReplicaset }},{{ .Values.global.mongo.hostArbiter }}?replicaSet=rs0
+  {{- end }}
+  marketing__MongoDatabase: {{ .Values.global.mongo.marketing.database }} 
+  marketing__PicBaseUrl: {{ $protocol }}://{{ $webshoppingapigw }}/c/api/v1/catalog/items/[0]/pic/
+  cfgmap__EMARKET_EVENTBUS_PROTO: {{ .Values.global.eventbus.proto }}
+  cfgmap__EMARKET_EVENTBUS_HOST: {{ .Values.global.eventbus.svc }}
+  cfgmap__EMARKET_EVENTBUS_PORT: "{{ .Values.global.eventbus.port }}"
+  cfgmap__EMARKET_EVENTBUS_USERNAME: {{ .Values.global.eventbus.username }}
+  cfgmap__EMARKET_EVENTBUS_PASSWORD: {{ .Values.global.eventbus.password }}
+  cfgmap__EMARKET_AUTH_SERVICE_HOST: {{ .Values.global.authservice.svc }}
+  cfgmap__EMARKET_AUTH_SERVICE_PORT: "{{ .Values.global.authservice.port }}"
+  cfgmap__EMARKET_WEBSTATUS_SERVICE_HOST: {{ .Values.global.svc.webstatus }}
+  cfgmap__EMARKET_SERVICE_HOST: {{ .Values.global.svc.marketing }}
+  cfgmap_EMARKET_TRACE_SERVER_HOST: "{{ .Values.global.tracing.servicename }}"
+  cfgmap_EMARKET_TRACE_SERVER_PORT: "{{ .Values.global.tracing.serviceport }}"
+

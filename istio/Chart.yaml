@@ -1,0 +1,9 @@
+apiVersion: v2
+name: emarket_istio
+description: A Helm chart for Kubernetes
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+dependencies:
+## these values are for lightweight version, can be disabled or enabled using kubernetes-values.yaml and eks-values.yaml as per environment
+##

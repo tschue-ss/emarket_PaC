@@ -1,0 +1,38 @@
+apiVersion: v2
+name: emarket
+description: A Helm chart for Kubernetes
+type: application
+version: 2.0.0
+appVersion: "2.4.0"
+dependencies:
+## these values are for lightweight version, can be disabled or enabled using kubernetes-values.yaml and eks-values.yaml as per environment
+##
+- name: grafana
+  condition: global.lightweight.grafana.enabled
+- name: prometheus
+  condition: global.lightweight.prometheus.enabled
+- name: elasticsearch
+  condition: global.lightweight.elasticsearch.enabled
+- name: fluentd
+  condition: global.lightweight.fluentd.enabled
+- name: jaeger
+  condition: global.tracing.enabled
+- name: kiali-server
+  condition: global.lightweight.kiali-server.enabled
+- name: metrics-server
+  condition: global.lightweight.metrics-server.enabled
+- name: webhooks-node
+  condition: global.lightweight.webhooks-node.enabled
+- name: webhooks-web
+  condition: global.lightweight.webhooks-web.enabled
+
+## these values are for aws deployment, do not need to change any value.
+##
+- name: basket-data
+  condition: global.env.kubernetes.enabled
+- name: mariadb-galera
+  condition: global.env.kubernetes.enabled
+- name: nfs-client-provisioner
+  condition: global.env.kubernetes.enabled
+- name: oauth2-proxy
+  condition: oauth2-proxy.enabled

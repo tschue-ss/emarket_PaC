@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: marketingapi
+  name: marketingapi
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: marketingapi
+  template:
+    metadata:
+      labels:
+        app: marketingapi
+    spec:
+      containers:
+      - image: <<ecr_url>>: <<repository_name>> 
+        imagePullPolicy: Always
+        name: marketingapi

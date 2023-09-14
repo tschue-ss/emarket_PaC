@@ -1,0 +1,328 @@
+global:
+  app:
+    ## @param global.app.name emarket application name
+    ##
+    name: emarket
+    ## @param global.app.namespace to deploy emarket application
+    ##
+    namespace: default
+    ## @param
+    ##
+    build-images:
+      enabled: true
+    ## @param
+    ##
+    push-images:
+      enabled: false
+    ## @param
+    ##
+    clean-existing:
+      enabled: true
+    ## @param global.app.url 
+    ##
+    url: 
+      default: dev-msa-emarket.sdsdev.co.kr
+      tenant: tenant-dev-msa-emarket.sdsdev.co.kr
+  ## @param global.env.kubernetes.enabled to enable the deployment cluster env
+  ##
+  env:
+    kubernetes:
+      enabled: true
+    eks:
+      enabled: false
+  ## @param global.lightweight to enable/disable the optional components, allowed values are 'true' or 'false'
+  ##
+  lightweight:
+    grafana:
+      enabled: true
+    prometheus:
+      enabled: true
+    elasticsearch:
+      enabled: true
+    fluentd:
+      enabled: true
+    kiali-server:
+      enabled: true
+    webhooks-node:
+      enabled: true
+    webhooks-web:
+      enabled: true
+  ## @param global.mesh.enabled to enable/disable the service istio mesh sidecar container, allowed values are 'true' or 'false'
+  ##
+  mesh:
+    enabled: true
+  ## @param global.kibanaEnabled to enable/disable the kibana, allowed values are 'true' or 'false'
+  ##
+  kibanaEnabled: true
+  ## @param global.tracing.enabled to enable/disable the jaeger tracing for all microservices, allowed values are 'true' or 'false'
+  ##
+  tracing:
+    enabled: true
+  ## @param global.high-availablility to enable/disable the high-availablility of components, allowed values are 'true' or 'false'
+  ##
+  high-availability:
+    mariadb:
+      enabled: false
+    mongodb:
+      enabled: false
+    redis:
+      enabled: false
+    rabbitmq:
+      enabled: false
+    elasticseach:
+      enabled: false
+    keycloak:
+      enabled: false
+    minio:
+      enabled: false
+    istio-ingress:
+      enabled: false
+  hpa:
+    minReplicas: 1
+    maxReplicas: 5
+  ## @param global.registry.enabled to enable/disable the container registry, allowed values are 'true' or 'false'
+  ##
+  registry:
+    ## @param global.registry.enabled to enable/disable the container registry, allowed values are 'true' or 'false'
+    ##
+    enabled: true
+    url: samsung-sds:5000
+    username: admin
+    password: admin
+  minio:
+    url: http://emarket-minio-headless
+    port: 9000
+    accesskey: minioadmin
+    secretkey: minioadmin
+    region: empty
+    iamArn: empty
+  sql:
+    host: emarket-mariadb-galera-headless
+    port: 3306
+    common:
+      user: root
+      pwd: Pass@word
+      pid: Developer
+  mongo:
+    ## MongoDB architecture. Allowed values: `standalone` or `replicaset`
+    ##
+    architecture: standalone
+    host: nosql-data
+    hostReplicaset: nosql-data-headless
+    hostArbiter: nosql-data-arbiter-headless
+  redis:
+    ## @param architecture Redis(TM) architecture. Allowed values: `standalone` or `replication`
+    ##
+    architecture: standalone
+    sentinel:
+      enabled: false
+      master:
+      port: 26379
+      svc: emarket-basket-data-headless
+    standalone:
+      port: 6379
+      svc: emarket-basket-data-headless
+  eventbus:
+      svc:  rabbitmq
+      constr:  rabbitmq
+      port: 5672
+      username: guest
+      password: guest
+      proto: amqp
+      ssl:
+        enabled: false
+          
+## Section for all subcharts to set the value
+
+mariadb-galera:
+  replicaCount: 1
+
+rabbitmq:
+  replicaCount: 1
+
+elasticsearch:
+  master:
+    replicas: 1
+  coordinating:
+    replicas: 1
+  data:
+    replicas: 1
+
+nfs-client-provisioner:
+  nfs:
+    server: samsung-sds
+    path: /data/sds
+
+fluentd:
+  logs:
+    path: /data/docker/containers
+
+jaeger:
+  provisionDataStore:
+   cassandra: false
+  storage:
+   type: elasticsearch
+   elasticsearch:
+     host: emarket-coordinating-only
+     port: 9200
+
+minio:
+  mode: standalone
+  persistence:
+   mountPath: /data
+  statefulset:
+   replicaCount: 1
+   zones: 1
+   drivesPerNode: 1   
+
+oauth2-proxy:
+  enabled: false
+
+
+## Resource Config for eMarket Microservices
+
+basket-api:
+  resources:
+    limits:
+      cpu: 1500m
+      memory: 2000Mi
+    requests:
+      cpu: 1000m
+      memory: 1500Mi
+catalog-api:
+  resources:
+    limits:
+      cpu: 1500m
+      memory: 2000Mi
+    requests:
+      cpu: 1000m
+      memory: 1500Mi
+identity-api:
+  resources:
+    limits:
+      cpu: 1500m
+      memory: 2000Mi
+    requests:
+      cpu: 1000m
+      memory: 1500Mi
+image-api:
+  resources:
+    limits:
+      cpu: 1500m
+      memory: 2000Mi
+    requests:
+      cpu: 1000m
+      memory: 1500Mi
+keycloak:
+  replicas: 1
+  resources:
+    limits:
+      cpu: 1500m
+      memory: 2000Mi
+    requests:
+      cpu: 1000m
+      memory: 1500Mi
+locations-api:
+  resources:
+    limits:
+      cpu: 1500m
+      memory: 2000Mi
+    requests:
+      cpu: 1000m
+      memory: 1500Mi
+marketing-api:
+  resources:
+    limits:
+      cpu: 1500m
+      memory: 2000Mi
+    requests:
+      cpu: 1000m
+      memory: 1500Mi
+mobileshoppingagg:
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1200Mi
+    requests:
+      cpu: 800m
+      memory: 800Mi
+notification:
+  resources:
+    limits:
+      cpu: 800m
+      memory: 1200Mi
+    requests:
+      cpu: 180m
+      memory: 600Mi
+ordering-api:
+  resources:
+    limits:
+      cpu: 1500m
+      memory: 2000Mi
+    requests:
+      cpu: 1000m
+      memory: 1500Mi
+ordering-backgroundtasks:
+  resources:
+    limits:
+      cpu: 800m
+      memory: 1200Mi
+    requests:
+      cpu: 180m
+      memory: 600Mi
+payment-api:
+  resources:
+    limits:
+      cpu: 700m
+      memory: 800Mi
+    requests:
+      cpu: 500m
+      memory: 556Mi
+webhooks-api:
+  resources:
+    limits:
+      cpu: 800m
+      memory: 1200Mi
+    requests:
+      cpu: 400m
+      memory: 600Mi
+webhooks-web:
+  resources:
+    limits:
+      cpu: 300m
+      memory: 500Mi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+webhooks-node:
+  resources:
+    limits:
+      cpu: 300m
+      memory: 700Mi
+    requests:
+      cpu: 200m
+      memory: 500Mi
+webspa:
+  resources:
+    limits:
+      cpu: 300m
+      memory: 500Mi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+webshoppingagg:
+  resources:
+    limits:
+      cpu: 1500m
+      memory: 1500Mi
+    requests:
+      cpu: 1000m
+      memory: 1000Mi
+webstatus:
+  resources:
+    limits:
+      cpu: 1500m
+      memory: 1500Mi
+    requests:
+      cpu: 1000m
+      memory: 1000Mi

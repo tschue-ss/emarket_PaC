@@ -1,0 +1,65 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: locationsapi-vs
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - ingress-gateway
+  http:
+  - match:
+    - uri:
+        exact: /location-api
+    - uri:
+        prefix: /location-api
+    - uri:
+        prefix: /location-api/
+    - uri:
+        prefix: /location-api/
+    route:
+    - destination:
+        host: locations-api
+        port:
+          number: 5000
+
+  - match:
+    - uri:
+        regex: /location-api
+    route:
+    - destination:
+        host: locations-api
+        port:
+          number: 5000
+---
+
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: locationsapi-dr
+  namespace: default
+spec:
+  host: locations-api
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+      
+      
+---
+ 
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: locations-authz
+  namespace: istio-system
+spec:
+  action: ALLOW
+  rules:
+    - to:
+      - operation:
+          methods: ["GET"]
+          paths: ["/webmarketingapigw/l/*","/webmarketingapigw/locations-api/*"]
+      when:
+      - key: request.auth.claims[iss]
+        values: ["*"]
+

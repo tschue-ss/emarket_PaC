@@ -1,0 +1,86 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: webspa
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - ingress-gateway
+  http:
+  - match:
+    - uri:
+        exact: /
+    - uri:
+        prefix: /static/
+    - uri:
+        prefix: /images/*
+    - uri:
+        prefix: /images
+    - uri:
+        prefix: /offers
+    - uri:
+        prefix: /cart
+    - uri:
+        prefix: /Account
+    - uri:
+        prefix: /locales
+    - uri:
+        prefix: /myorders
+    - uri:
+        prefix: /checkout
+    - uri:
+        prefix: /orderdetails
+    - uri:
+        prefix: /product-detail
+    - uri:
+        prefix: /productlist
+    route:
+    - destination:
+        host: webspa
+        subset: v1
+        port:
+          number: 80
+      weight: 100
+    - destination:
+        host: webspa
+        subset: v2
+        port:
+          number: 80
+      weight: 0
+
+
+---
+
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: webspa
+  namespace: default
+spec:
+  host: webspa.default.svc.cluster.local
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+
+---
+
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: webspa-authz
+  namespace: istio-system
+spec:
+  action: ALLOW
+  rules:
+    - to:
+      - operation:
+          methods: ["GET","POST","PUT","DELETE","OPTIONS"]
+          paths: ["/*"]

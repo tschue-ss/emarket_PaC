@@ -1,0 +1,21 @@
+{{- $name := include "webhooks-node.fullname" . -}}
+{{- $mongo := include "mongo-name" . -}}
+
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "cfg-{{ $name }}"
+  labels:
+    app: {{ template "webhooks-node.name" . }}
+    chart: {{ template "webhooks-node.chart" .}}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+data:
+  {{- if eq .Values.global.mongo.architecture "standalone" }}
+  webhooksnode__EMARKET_NOSQL_DATA_URL: mongodb://{{ $mongo }}
+  {{- else }}
+  webhooksnode__EMARKET_NOSQL_DATA_URL: mongodb://{{ .Values.global.mongo.hostReplicaset }},{{ .Values.global.mongo.hostArbiter }}?replicaSet=rs0?
+  {{- end }}
+  webhooksnode__Database: {{ .Values.global.mongo.webhooksnode.database }}
+

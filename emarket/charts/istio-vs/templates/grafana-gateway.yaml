@@ -1,0 +1,50 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: grafana-vs
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - ingress-gateway
+  http:
+  - match:
+    - uri:
+        exact: /grafana
+    - uri:
+        prefix: /grafana
+    - uri:
+        prefix: /grafana/
+    route:
+    - destination:
+        host: emarket-grafana.default.svc.cluster.local
+        port:
+          number: 80
+
+---
+
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: grafana-dr
+  namespace: default
+spec:
+  host: emarket-grafana.default.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+
+---
+
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: grafana-authz
+  namespace: istio-system
+spec:
+  action: ALLOW
+  rules:
+    - to:
+      - operation:
+          methods: ["GET","POST"]
+          paths: ["/grafana*"]
